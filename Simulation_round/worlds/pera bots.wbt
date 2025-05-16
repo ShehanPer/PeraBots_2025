@@ -1,0 +1,186 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "../protos/AutoNova.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation -0.2758314309442192 0.08093219374064882 0.9577927759800606 2.593680050168919
+  position -0.06527412192622589 -0.8580234759865568 0.386528286144461
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 2 2
+  floorAppearance PBRAppearance {
+    roughness 1
+    roughnessMap ImageTexture {
+      url [
+        "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/textures/parquetry/mosaic_parquetry_roughness.jpg"
+      ]
+    }
+    metalness 0
+    normalMap ImageTexture {
+      url [
+        "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/textures/parquetry/mosaic_parquetry_normal.jpg"
+      ]
+    }
+    occlusionMap ImageTexture {
+      url [
+        "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/textures/parquetry/mosaic_parquetry_occlusion.jpg"
+      ]
+    }
+  }
+}
+Transform {
+  scale 0.01 0.01 0.01
+  children [
+    DEF Path Shape {
+      appearance PBRAppearance {
+        baseColor 0 0 0
+        roughness 1
+        metalness 0
+      }
+      geometry Mesh {
+        url [
+          "../path/outer_path.obj"
+        ]
+      }
+    }
+  ]
+}
+Transform {
+  scale 0.01 0.01 0.01
+  children [
+    DEF Path Shape {
+      appearance PBRAppearance {
+        baseColor 0 0 0
+        roughness 1
+        metalness 0
+      }
+      geometry Mesh {
+        url [
+          "../path/inner_path.obj"
+        ]
+      }
+    }
+  ]
+}
+Solid {
+  translation 0.45 -0.73 0.05
+  rotation 0 0 1 0.261799
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0 0 0
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 0.1 0.1 0.1
+      }
+    }
+  ]
+}
+Solid {
+  translation 0.666748 -0.198009 0.05
+  rotation 0 0 -1 -1.3089953071795861
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0 0 0
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 0.2 0.1 0.1
+      }
+    }
+  ]
+  name "solid(1)"
+}
+Solid {
+  translation 0.36358 0.381911 0.05
+  rotation 0 0 -1 -1.047195307179586
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0 0 0
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 0.12 0.1 0.1
+      }
+    }
+  ]
+  name "solid(3)"
+}
+Solid {
+  translation -0.380764 0.661551 0.05
+  rotation 0 0 1 2.09439
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0 0 0
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 0.12 0.1 0.1
+      }
+    }
+  ]
+  name "solid(4)"
+}
+Solid {
+  translation -0.545793 -0.0756207 0.05
+  rotation 0 0 1 1.83259
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0 0 0
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 0.1 0.3 0.1
+      }
+    }
+  ]
+  name "solid(5)"
+}
+Solid {
+  translation -0.356546 -0.527723 0
+  rotation 0 0 1 2.8797896938995744
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0 0
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 0.03 0.55 0.0005
+      }
+    }
+  ]
+  name "solid(6)"
+}
+AutoNova {
+  hidden position_0_0 55.20163995413456
+  hidden position_0_1 55.20163989214048
+  hidden linearVelocity_0 3.421098271570613e-07 -9.166934414734779e-08 1.0070415306508532e-08
+  hidden angularVelocity_0 3.7547358724124156e-06 1.4012644929463294e-05 3.3472254736381783e-12
+  hidden linearVelocity_14 4.203613129389306e-07 -1.1263724320490488e-07 1.0347492798440185e-08
+  hidden angularVelocity_14 3.7547363262100198e-06 1.401264669714397e-05 3.361971594944488e-12
+  hidden linearVelocity_15 4.203613180227671e-07 -1.126372446485889e-07 1.0333822340136087e-08
+  hidden angularVelocity_15 3.754736338339767e-06 1.4012646697601266e-05 3.3609143979433767e-12
+  translation -0.3493097506311408 -0.5327243196783421 0.019993106291700355
+  rotation -0.00035161327264299165 -0.002676463278626104 -0.9999963564495746 0.2617962490142457
+}
