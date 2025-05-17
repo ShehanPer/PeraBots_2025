@@ -1,32 +1,38 @@
-"""my_controller controller."""
-
-# You may need to import some classes of the controller module. Ex:
-#  from controller import Robot, Motor, DistanceSensor
 from controller import Robot
+import cv2
 
-# create the Robot instance.
+
+TIME_STEP = 32
+MAX_SPEED = 6.28  # Adjust if your robot's max speed is different
+
 robot = Robot()
 
-# get the time step of the current world.
-timestep = int(robot.getBasicTimeStep())
+left_motor = robot.getDevice('left motor')
+right_motor = robot.getDevice('right motor')
 
-# You should insert a getDevice-like function in order to get the
-# instance of a device of the robot. Something like:
-#  motor = robot.getDevice('motorname')
-#  ds = robot.getDevice('dsname')
-#  ds.enable(timestep)
+#get the camera device
+camera = robot.getDevice('camera')
+camera.enable(TIME_STEP)
 
-# Main loop:
-# - perform simulation steps until Webots is stopping the controller
-while robot.step(timestep) != -1:
-    # Read the sensors:
-    # Enter here functions to read sensor data, like:
-    #  val = ds.getValue()
 
-    # Process sensor data here.
+left_motor.setPosition(float('inf'))
+right_motor.setPosition(float('inf'))
 
-    # Enter here functions to send actuator commands, like:
-    #  motor.setPosition(10.0)
-    pass
+left_motor.setVelocity(MAX_SPEED)
+right_motor.setVelocity(MAX_SPEED)
 
-# Enter here exit cleanup code.
+while robot.step(TIME_STEP) != -1:
+   
+    ret, frame = camera.getImage()
+    if ret:
+        # Convert the image to a format suitable for OpenCV
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        
+        # Display the image using OpenCV
+        cv2.imshow('Camera Feed', frame)
+        
+        # Break the loop if 'q' is pressed
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+cv2.destroyAllWindows()

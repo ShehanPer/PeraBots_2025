@@ -7,7 +7,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 PROTO AutoNova [
   field SFVec3f            translation                  0 0 0
   field SFRotation         rotation                     0 0 1 0
-  field SFString           name                         "AutoNova"
+  field SFString           name                         "Phoenix"
   field SFString           model                        "v1"
   field SFString           controller                   "<generic>"
 ]
@@ -17,45 +17,26 @@ Robot {
   rotation IS rotation
   children [
     Mir100UltrasonicSensor {
-      translation -0.073 0 0.009
+      translation -0.05 0 0.016
       rotation 0 0 1 3.14159
       name "ps8"
     }
-    Mir100UltrasonicSensor {
-      translation -0.05 0.05 0.041
-      rotation 0 0 1 1.5708
-      name "ps7"
-    }
-    Mir100UltrasonicSensor {
-      translation -0.05 -0.05 0.041
-      rotation 0 0 1 -1.5708
-      name "ps5"
-    }
-    Mir100UltrasonicSensor {
-      translation 0.05 -0.05 0.041
-      rotation 0 0 1 -1.5708
-      name "ps3"
-    }
-    Mir100UltrasonicSensor {
-      translation 0.05 0.05 0.041
-      rotation 0 0 1 1.5708
-      name "ps1"
-    }
+    
     GPS {
       name "GPS"
     }
     Mir100UltrasonicSensor {
-      translation 0 -0.073 0.009
+      translation 0 -0.0566 0.016
       rotation 0 0 1 -1.5708
       name "ps0"
     }
     Mir100UltrasonicSensor {
-      translation 0 0.073 0.009
+      translation 0 0.0566 0.016
       rotation 0 0 1 1.5708
       name "ps4"
     }
     Mir100UltrasonicSensor {
-      translation 0.073 0 0.041
+      translation 0.048 0 0.04
       name "ps2"
     }
     Gyro {
@@ -64,23 +45,18 @@ Robot {
     InertialUnit {
       name "Inertial Unit"
     }
-    SpotLight {
-      attenuation 0 0 0.4
-      beamWidth 0.7
-      direction 1 0 0
-      intensity 0.2
-    }
     JetBotRaspberryPiCamera {
-      translation 0.06 0 0.005
+      translation 0.054 0 0.018
       fieldOfView 2
       width 360
       height 360
     }
+    # New Left Wheel
     HingeJoint {
       jointParameters HingeJointParameters {
-        position 55.201639954134855
+        position 0
         axis 0 1 0
-        anchor 0 0.06 0.0098
+        anchor 0 0.04 0.006 # y = +0.04
       }
       device [
         PositionSensor {
@@ -91,12 +67,12 @@ Robot {
         }
       ]
       endPoint Solid {
-        translation 0 0.06 0.0098
+        translation 0 0.04 0.006 # y = +0.04
         rotation -0.663201978740694 0.5292263588492966 -0.5292283028084793 4.312789542383721
         children [
           DEF wheel Shape {
             appearance PBRAppearance {
-              baseColor 0 1 1
+              baseColor 0 0.4 1
               metalness 0
             }
             geometry DEF wheel_geo Cylinder {
@@ -111,11 +87,12 @@ Robot {
         }
       }
     }
+    # New Right Wheel
     HingeJoint {
       jointParameters HingeJointParameters {
-        position 55.201639892140776
+        position 0
         axis 0 1 0
-        anchor 0 -0.06 0.0098
+        anchor 0 -0.04 0.006 # y = -0.04
       }
       device [
         PositionSensor {
@@ -126,12 +103,12 @@ Robot {
         }
       ]
       endPoint Solid {
-        translation 0 -0.06 0.0098
+        translation 0 -0.04 0.006 # y = -0.04
         rotation -0.6632019550735453 0.5292263736785301 -0.5292283176377659 4.312789509509007
         children [
           DEF wheel Shape {
             appearance PBRAppearance {
-              baseColor 0 1 1
+              baseColor 0 0.4 1
               metalness 0
             }
             geometry DEF wheel_geo Cylinder {
@@ -146,33 +123,60 @@ Robot {
         }
       }
     }
+    BallJoint {
+      jointParameters BallJointParameters {
+        anchor -0.046 0 -0.015
+      }
+      endPoint Solid {
+        translation -0.046 0 -0.015
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.2 0.2 0.2
+              metalness 0.5
+            }
+            geometry Sphere {
+              radius 0.012
+            }
+          }
+        ]
+        name "ClusterWheel"
+        boundingObject Sphere {
+          radius 0.012
+        }
+        physics Physics {
+          mass 0.02
+        }
+      }
+    }
     DEF Body Shape {
       appearance PBRAppearance {
         metalness 0
       }
       geometry Box {
-        size 0.1 0.1 0.0399
+        size 0.07 0.07 0.0399
       }
     }
     Solid {
-      translation -0.0859 -0.0853 0.02
+      translation 0 0 0.02
       children [
         Shape {
           appearance PBRAppearance {
-            metalness 0
+            baseColor 0 0.6 0
+            metalness 0.01
           }
           geometry Mesh {
             url [
-              "../RoboParts/topCylinder.STL"
+              "../RoboParts/top.STL"
             ]
-            name "top cylinder"
+            name "top "
           }
         }
       ]
       name "top"
       boundingObject Mesh {
         url [
-          "../RoboParts/topCylinder.STL"
+          "../RoboParts/top.STL"
         ]
       }
       physics Physics {

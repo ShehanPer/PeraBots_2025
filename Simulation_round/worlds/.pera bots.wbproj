@@ -6,6 +6,4 @@ maximizedDockId: -1
 centralWidgetVisible: 1
 orthographicViewHeight: 1
 textFiles: 0 "controllers/my_controller/my_controller.py"
-globalOptionalRendering: DistanceSensorRays
-renderingDevicePerspectives: AutoNova:camera;1;1;0;0
-renderingDevicePerspectives: e-puck:camera;1;1;0;0
+renderingDevicePerspectives: Phoenix:camera;1;1;0;0
