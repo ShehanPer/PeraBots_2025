@@ -202,9 +202,11 @@ def update_map():
     x_index = int((current_position[0]) / MAP_RES)
     y_index = MAP_SIZE - int((current_position[1]) / MAP_RES) 
     print("Indexes : ",x_index,y_index)
-    if 0 <= x_index < MAP_SIZE and 0 <= y_index < MAP_SIZE:
-        MAP[y_index, x_index] = 1  # Mark the cell as visited
-
+    for x in range(x_index-2,x_index+3):
+        for y in range(y_index-2,y_index+3):
+            if 0 <= x < MAP_SIZE and 0 <= y < MAP_SIZE:
+                MAP[y, x] = 1  # Mark the cell as visited
+    
 
 
 
