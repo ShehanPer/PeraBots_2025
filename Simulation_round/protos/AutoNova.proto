@@ -46,10 +46,12 @@ Robot {
       name "Inertial Unit"
     }
     JetBotRaspberryPiCamera {
-      translation 0.054 0 0.018
-      fieldOfView 2
-      width 360
-      height 360
+      translation 0.054 0 0.006
+      rotation 0 0 0 0
+      fieldOfView 62
+      width 480
+      height 480
+      
     }
     # New Left Wheel
     HingeJoint {
