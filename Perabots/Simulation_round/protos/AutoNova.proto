@@ -1,0 +1,222 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/nvidia/jetbot/protos/JetBotRaspberryPiCamera.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/mir/mir100/protos/Mir100UltrasonicSensor.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/devices/sharp/protos/SharpGP2Y0A41SK0F.proto"
+
+
+PROTO AutoNova [
+  field SFVec3f            translation                  0 0 0
+  field SFRotation         rotation                     0 0 1 0
+  field SFString           name                         "Phoenix"
+  field SFString           model                        "v1"
+  field SFString           controller                   "<generic>"
+]
+{
+Robot {
+  translation IS translation
+  rotation IS rotation
+  children [
+  
+    
+    Mir100UltrasonicSensor {
+      translation -0.05 0 0.016
+      rotation 0 0 1 3.14159
+      name "ps8"
+    }
+
+    GPS {
+      name "GPS"
+    }
+    Mir100UltrasonicSensor {
+      translation 0 -0.0566 0.016
+      rotation 0 0 1 -1.5708
+      name "ps0"
+    }
+    Mir100UltrasonicSensor {
+      translation 0 0.0566 0.016
+      rotation 0 0 1 1.5708
+      name "ps4"
+    }
+    Mir100UltrasonicSensor {
+      translation 0.048 0 0.04
+      name "ps2"
+    }
+    Gyro {
+      name "gyroScope"
+    }
+    InertialUnit {
+      name "Inertial Unit"
+    }
+    JetBotRaspberryPiCamera {
+      rotation 0 1 0 0.59  # -30 degrees in radians = -0.5236
+      translation 0.054 0 0.07
+      fieldOfView 2.5
+      width 300
+      height 200
+      name "camera"
+    }
+    # New Left Wheel
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        position 0
+        axis 0 1 0
+        anchor 0 0.04 0.006 # y = +0.04
+      }
+      device [
+        PositionSensor {
+          name "left encoder"
+        }
+        RotationalMotor {
+          name "left motor"
+        }
+      ]
+      endPoint Solid {
+        translation 0 0.04 0.006 # y = +0.04
+        rotation -0.663201978740694 0.5292263588492966 -0.5292283028084793 4.312789542383721
+        
+        children [
+          DEF wheel Shape {
+            appearance PBRAppearance {
+              baseColor 0 0.4 1
+              metalness 0
+            }
+            geometry DEF wheel_geo Cylinder {
+              height 0.009
+              radius 0.03
+            }
+          }
+        ]
+        name "LeftWheel"
+        boundingObject USE wheel
+        physics Physics {
+        }
+      }
+    }
+    # New Right Wheel
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        position 0
+        axis 0 1 0
+        anchor 0 -0.04 0.006 # y = -0.04
+      }
+      device [
+        PositionSensor {
+          name "right encoder"
+        }
+        RotationalMotor {
+          name "right motor"
+        }
+      ]
+      endPoint Solid {
+        translation 0 -0.04 0.006 # y = -0.04
+        rotation -0.6632019550735453 0.5292263736785301 -0.5292283176377659 4.312789509509007
+        children [
+          DEF wheel Shape {
+            appearance PBRAppearance {
+              baseColor 0 0.4 1
+              metalness 0
+            }
+            geometry DEF wheel_geo Cylinder {
+              height 0.009
+              radius 0.03
+            }
+          }
+        ]
+        name "RightWheel"
+        boundingObject USE wheel
+        physics DEF physics_wh Physics {
+        }
+      }
+    }
+    BallJoint {
+      jointParameters BallJointParameters {
+        anchor -0.046 0 -0.015
+      }
+      endPoint Solid {
+        translation -0.046 0 -0.015
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.2 0.2 0.2
+              metalness 0.5
+            }
+            geometry Sphere {
+              radius 0.012
+            }
+          }
+        ]
+        name "ClusterWheel"
+        boundingObject Sphere {
+          radius 0.012
+        }
+        physics Physics {
+          mass 0.02
+        }
+      }
+    }
+    
+    
+    SharpGP2Y0A41SK0F {
+      translation -0.01 -0.02 0.037
+      rotation 0.7071072811865696 -0.7071062811861719 -3.3905013482585576e-09 3.14159
+      name "rightIR"
+    }
+    
+    SharpGP2Y0A41SK0F {
+      translation -0.01 0.02 0.037
+      rotation 0 0 1 1.570796
+      name "leftIR"
+    }
+    
+    DEF Body Shape {
+      appearance PBRAppearance {
+        metalness 0
+      }
+      geometry Box {
+        size 0.07 0.07 0.0399
+      }
+    }
+    Solid {
+      translation 0 0 0.02
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0 0.6 0
+            metalness 0.01
+          }
+          geometry Mesh {
+            url [
+              "../RoboParts/top.STL"
+            ]
+            name "top "
+          }
+        }
+      ]
+      name "top"
+      boundingObject Mesh {
+        url [
+          "../RoboParts/top.STL"
+        ]
+      }
+      physics Physics {
+        density 0.1
+        centerOfMass [
+          0 0 0
+        ]
+      }
+    }
+    
+
+  ]
+  name IS name
+  model IS model
+  boundingObject USE Body
+  physics Physics {
+  }
+  controller IS controller
+  battery [
+    0
+  ]
+}
+}
