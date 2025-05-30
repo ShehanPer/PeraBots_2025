@@ -3,55 +3,19 @@ import numpy as np
 import math
 import json
 
+from config import *
 
-PATH_MARKER = 1
-FREE_SPACE_MARKER = 2  # 0 will remain 'unknown'
-OBSTACLE_MARKER = 3    # For future use, if you detect obstacles explicitly
+
 
 SENSOR_OFFSET_SIDEWAYS = 0.02  # 2cm, distance of IR sensor from robot's longitudinal center
-SENSOR_MAX_RANGE = 0.35       # Max reliable range to mark as free (e.g., Sharp GP2Y0A41SK0F is 4-30cm, up to 40cm)
-                               # Adjust based on your sensor's effective reliable range.
+SENSOR_MAX_RANGE = 0.35       # Max reliable range to mark as free 
 
 
-
-
-# Constants
-TIME_STEP = 32
-
-WHEEL_RADIUS = 0.03  # meters
-AXLE_LENGTH = 0.08   # distance between wheels
 MAP_RES = 0.02       # 2cmx2cm per cell
 MAP_SIZE = 100      # 100x100 grid
 MAP= np.zeros((MAP_SIZE, MAP_SIZE), dtype=int)  # Initialize the map
 
 
-# Init robot
-robot = Robot()
-current_position = [0.58,0.46] # Initial position of the robot in meters
-current_encoder_values = [0, 0]
-angle=0
-
-
-# Encoders
-left_encoder = robot.getDevice("left encoder")
-right_encoder = robot.getDevice("right encoder")
-left_encoder.enable(TIME_STEP)
-right_encoder.enable(TIME_STEP)
-
-
-# IMU
-imu = robot.getDevice("Inertial Unit")
-imu.enable(TIME_STEP)
-
-# Gyro
-gyro = robot.getDevice("gyroScope")
-gyro.enable(TIME_STEP)
-
-# IR Sensors
-right_IR=robot.getDevice("rightIR")
-left_IR=robot.getDevice("leftIR")
-left_IR.enable(TIME_STEP)
-right_IR.enable(TIME_STEP)
 
 def ir_to_distance(value):
     return 0.1594*value**(-0.8533)-0.02916 
@@ -278,50 +242,3 @@ def save_map_json(map_array, map_resolution_val, filename="robot_map_custom.json
 
 # Your existing load function should still work, but let's make it more robust
 # to the map_resolution type error you encountered in your file.
-def load_map_from_json(filename="robot_map.json"):
-    try:
-        with open(filename, 'r') as f:
-            map_data_loaded = json.load(f)
-        
-        map_list = map_data_loaded.get("map_layout")
-        loaded_map_size = map_data_loaded.get("map_size")
-        loaded_map_res_raw = map_data_loaded.get("map_resolution")
-        loaded_map_res = None
-
-        if loaded_map_res_raw is not None:
-            if isinstance(loaded_map_res_raw, (int, float)):
-                loaded_map_res = loaded_map_res_raw
-            else:
-                print(f"Warning: Loaded map_resolution '{loaded_map_res_raw}' is not a direct number. Attempting conversion.")
-                try:
-                    loaded_map_res = float(loaded_map_res_raw)
-                except ValueError:
-                    print(f"Error: Cannot convert loaded map_resolution '{loaded_map_res_raw}' to a float.")
-                    # Decide: return None for resolution, raise error, or use a default.
-                    # For now, we'll proceed with loaded_map_res as None if conversion fails.
-        else:
-            print("Warning: 'map_resolution' not found in JSON or is null.")
-
-
-        if map_list is None:
-            print(f"Error: 'map_layout' not found in {filename}.")
-            return None, None # Must have map_layout
-
-        map_array = np.array(map_list, dtype=int) 
-        
-        if loaded_map_size is not None and map_array.shape[0] != loaded_map_size:
-            print(f"Warning: Loaded map dimensions {map_array.shape} "
-                  f"do not match stored map_size {loaded_map_size}.")
-
-        print(f"Map successfully loaded from {filename}. Resolution: {loaded_map_res}")
-        return map_array, loaded_map_res
-        
-    except FileNotFoundError:
-        print(f"Error: Map file {filename} not found.")
-        return None, None
-    except json.JSONDecodeError as e:
-        print(f"Error decoding JSON from {filename}: {e}")
-        return None, None
-    except Exception as e:
-        print(f"An unexpected error occurred during loading: {e}")
-        return None, None

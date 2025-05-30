@@ -1,48 +1,17 @@
-from controller import Robot
 import cv2
 import numpy as np
+from config import *
 from movemap import *
 from matrix_map import *
 
 
-# Constants
-TIME_STEP = 32
-MAX_SPEED=6
-FORWARD_SPEED = 3.0  # Speed for moving forward/backward
-TURN_SPEED = 1.5     # Speed for turning
+
 
 
 # Initialize Keyboard
 keyboard = robot.getKeyboard()
 keyboard.enable(TIME_STEP)
 
-
-# Motors
-left_motor = robot.getDevice("left motor")
-right_motor = robot.getDevice("right motor")
-left_motor.setPosition(float("inf"))
-right_motor.setPosition(float("inf"))
-left_motor.setVelocity(0.0)
-right_motor.setVelocity(0.0)
-
-#Camera
-camera=robot.getDevice("camera")
-camera.enable(TIME_STEP)
-
-
-#Ultrasonic Sensors
-ds_names = ['ps4', 'ps0', 'ps2']
-sensors = [robot.getDevice(name) for name in ds_names]
-for sensor in sensors:
-    sensor.enable(TIME_STEP)
-    
-    
-
-
-robot.step(TIME_STEP)
-
-current_encoder_values[0]=left_encoder.getValue()
-current_encoder_values[1]=right_encoder.getValue()
 
 set_movemap_Devices(left_motor, right_motor, camera, sensors,left_encoder,right_encoder,imu,gyro,right_IR,left_IR )
 

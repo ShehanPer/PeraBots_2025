@@ -4,6 +4,61 @@ import math
 from skimage.morphology import skeletonize
 # from scipy.interpolate import splprep, splev # Optional for advanced smoothing
 
+from config import *
+from matrix_map import save_map_json
+
+
+def load_map_from_json(filename="robot_map.json"):
+    try:
+        with open(filename, 'r') as f:
+            map_data_loaded = json.load(f)
+        
+        map_list = map_data_loaded.get("map_layout")
+        loaded_map_size = map_data_loaded.get("map_size")
+        loaded_map_res_raw = map_data_loaded.get("map_resolution")
+        loaded_map_res = None
+
+        if loaded_map_res_raw is not None:
+            if isinstance(loaded_map_res_raw, (int, float)):
+                loaded_map_res = loaded_map_res_raw
+            else:
+                print(f"Warning: Loaded map_resolution '{loaded_map_res_raw}' is not a direct number. Attempting conversion.")
+                try:
+                    loaded_map_res = float(loaded_map_res_raw)
+                except ValueError:
+                    print(f"Error: Cannot convert loaded map_resolution '{loaded_map_res_raw}' to a float.")
+                    # Decide: return None for resolution, raise error, or use a default.
+                    # For now, we'll proceed with loaded_map_res as None if conversion fails.
+        else:
+            print("Warning: 'map_resolution' not found in JSON or is null.")
+
+
+        if map_list is None:
+            print(f"Error: 'map_layout' not found in {filename}.")
+            return None, None # Must have map_layout
+
+        map_array = np.array(map_list, dtype=int) 
+        
+        if loaded_map_size is not None and map_array.shape[0] != loaded_map_size:
+            print(f"Warning: Loaded map dimensions {map_array.shape} "
+                  f"do not match stored map_size {loaded_map_size}.")
+
+        print(f"Map successfully loaded from {filename}. Resolution: {loaded_map_res}")
+        return map_array, loaded_map_res
+        
+    except FileNotFoundError:
+        print(f"Error: Map file {filename} not found.")
+        return None, None
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON from {filename}: {e}")
+        return None, None
+    except Exception as e:
+        print(f"An unexpected error occurred during loading: {e}")
+        return None, None
+
+
+
+
 # Attempt to import shared functions and constants from matrix_map.py
 # If matrix_map.py is in the same directory or Python path.
 try:
@@ -17,28 +72,6 @@ except ImportError:
     PATH_MARKER = 1
     FREE_SPACE_MARKER = 2
     UNKNOWN_MARKER = 0
-
-    def load_map_from_json(filename="robot_map.json"):
-        # (Copy the load_map_from_json function from your matrix_map.py here)
-        # For brevity, I'm omitting the full function here, but you'd paste it.
-        # Ensure it returns (map_array, map_resolution)
-        try:
-            with open(filename, 'r') as f:
-                map_data_loaded = json.load(f)
-            map_list = map_data_loaded.get("map_layout")
-            loaded_map_res_raw = map_data_loaded.get("map_resolution")
-            loaded_map_res = None
-            if loaded_map_res_raw is not None:
-                if isinstance(loaded_map_res_raw, (int, float)): loaded_map_res = loaded_map_res_raw
-                else:
-                    try: loaded_map_res = float(loaded_map_res_raw)
-                    except ValueError: pass
-            if map_list is None: return None, None
-            map_array = np.array(map_list, dtype=int)
-            return map_array, loaded_map_res
-        except Exception as e:
-            print(f"Fallback load_map_from_json error: {e}")
-            return None, None
 
     def save_map_json(map_array, map_resolution_val, filename="robot_map_custom.json"):
         # (Copy the save_map_json function with custom formatting from your matrix_map.py here)
