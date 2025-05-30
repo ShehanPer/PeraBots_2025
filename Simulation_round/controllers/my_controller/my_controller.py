@@ -41,8 +41,8 @@ KP = 0.005
 KI = 0.0001
 KD = 0.001
 TARGET_DISTANCE = 60  # Ideal distance sensor reading from right wall
-integral=0;
-prev_error=0;
+integral=0
+prev_error=0
 base_speed = 2
 
 def print_path_map(path_map, robot_x, robot_y):

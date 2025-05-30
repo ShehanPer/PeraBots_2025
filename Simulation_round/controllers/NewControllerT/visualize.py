@@ -131,7 +131,8 @@ def create_map_image(map_array, output_image_filename="map_visualization.png", c
 # --- Main part of the script ---
 if __name__ == "__main__":
     # Path to your saved JSON map file (the one you uploaded)
-    json_map_file_path = "E:/Projects/PeraBots_2025/Simulation_round/controllers/my_controller/robot_map_2cm.json" # Make sure this file is in the same directory or provide full path
+    json_map_file_path = "E:/Projects/PeraBots_2025/Simulation_round/controllers/NewControllerT/robot_map_2cm.json" # Make sure this file is in the same directory or provide full path
+    
     # Desired name for the output image
     output_image_file_path = "map_generated_2cm.png"
 
