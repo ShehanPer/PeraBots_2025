@@ -1,10 +1,8 @@
-from controller import Robot
 import numpy as np
 import math
-import json
 
 from config import *
-
+from map_json import *
 
 
 SENSOR_OFFSET_SIDEWAYS = 0.02  # 2cm, distance of IR sensor from robot's longitudinal center
@@ -172,73 +170,3 @@ def update_map():
                 MAP[y, x] = 1  # Mark the cell as visited
     
 
-
-
-
-
-def save_map_json(map_array, map_resolution_val, filename="robot_map_custom.json"):
-    """
-    Saves the map to a JSON file with custom formatting:
-    - Outer dictionary keys are indented.
-    - Each row in 'map_layout' starts on a new, indented line.
-    - Elements within each row are on that single line (compact).
-
-    Args:
-        map_array (np.ndarray): The 2D NumPy array for the map.
-        map_resolution_val (float): The resolution of the map (e.g., 0.04).
-        filename (str): The name of the JSON file to save.
-    """
-    if not isinstance(map_array, np.ndarray):
-        print("Error: map_array must be a NumPy array.")
-        return
-    if not isinstance(map_resolution_val, (int, float)):
-        print(f"Error: map_resolution_val '{map_resolution_val}' must be a number.")
-        # Attempt to convert if it's a string representation of a number,
-        # otherwise this will cause issues in JSON formatting.
-        try:
-            map_resolution_val = float(map_resolution_val)
-        except ValueError:
-            print(f"Critical Error: map_resolution_val '{map_resolution_val}' cannot be converted to a float.")
-            return
-
-    map_list_of_lists = map_array.tolist()
-
-    # Define indentation strings
-    outer_indent = "  "  # Indentation for top-level keys and closing brace of map_layout
-    row_indent = outer_indent * 2 # Indentation for each row string
-
-    # 1. Format each row in map_layout compactly
-    formatted_rows = []
-    for row in map_list_of_lists:
-        # json.dumps for a simple list with compact separators
-        row_str_compact = json.dumps(row, separators=(',', ':'))
-        formatted_rows.append(row_indent + row_str_compact)
-
-    # 2. Construct the map_layout block string
-    if formatted_rows:
-        map_layout_block = "[\n" + ",\n".join(formatted_rows) + "\n" + outer_indent + "]"
-    else:
-        map_layout_block = "[]" # Handle empty map
-
-    # 3. Construct the full JSON string manually
-    # We use json.dumps for individual values to ensure correct JSON formatting (e.g., numbers vs strings)
-    json_lines = [
-        "{",
-        outer_indent + f'"map_size": {json.dumps(map_array.shape[0])},',
-        outer_indent + f'"map_resolution": {json.dumps(map_resolution_val)},', # map_resolution_val is now a number
-        outer_indent + f'"map_layout": {map_layout_block}', # map_layout_block is already a string
-        "}"
-    ]
-    final_json_string = "\n".join(json_lines)
-
-    try:
-        with open(filename, 'w') as f:
-            f.write(final_json_string)
-        print(f"Map successfully saved to {filename} with custom formatting.")
-    except IOError as e:
-        print(f"Error saving map to {filename}: {e}")
-    except Exception as e:
-        print(f"An unexpected error occurred during saving: {e}")
-
-# Your existing load function should still work, but let's make it more robust
-# to the map_resolution type error you encountered in your file.

@@ -1,100 +1,12 @@
 import numpy as np
-import json
 import math
 from skimage.morphology import skeletonize
 # from scipy.interpolate import splprep, splev # Optional for advanced smoothing
 
 from config import *
-from matrix_map import save_map_json
+from map_json import *
 
 
-def load_map_from_json(filename="robot_map.json"):
-    try:
-        with open(filename, 'r') as f:
-            map_data_loaded = json.load(f)
-        
-        map_list = map_data_loaded.get("map_layout")
-        loaded_map_size = map_data_loaded.get("map_size")
-        loaded_map_res_raw = map_data_loaded.get("map_resolution")
-        loaded_map_res = None
-
-        if loaded_map_res_raw is not None:
-            if isinstance(loaded_map_res_raw, (int, float)):
-                loaded_map_res = loaded_map_res_raw
-            else:
-                print(f"Warning: Loaded map_resolution '{loaded_map_res_raw}' is not a direct number. Attempting conversion.")
-                try:
-                    loaded_map_res = float(loaded_map_res_raw)
-                except ValueError:
-                    print(f"Error: Cannot convert loaded map_resolution '{loaded_map_res_raw}' to a float.")
-                    # Decide: return None for resolution, raise error, or use a default.
-                    # For now, we'll proceed with loaded_map_res as None if conversion fails.
-        else:
-            print("Warning: 'map_resolution' not found in JSON or is null.")
-
-
-        if map_list is None:
-            print(f"Error: 'map_layout' not found in {filename}.")
-            return None, None # Must have map_layout
-
-        map_array = np.array(map_list, dtype=int) 
-        
-        if loaded_map_size is not None and map_array.shape[0] != loaded_map_size:
-            print(f"Warning: Loaded map dimensions {map_array.shape} "
-                  f"do not match stored map_size {loaded_map_size}.")
-
-        print(f"Map successfully loaded from {filename}. Resolution: {loaded_map_res}")
-        return map_array, loaded_map_res
-        
-    except FileNotFoundError:
-        print(f"Error: Map file {filename} not found.")
-        return None, None
-    except json.JSONDecodeError as e:
-        print(f"Error decoding JSON from {filename}: {e}")
-        return None, None
-    except Exception as e:
-        print(f"An unexpected error occurred during loading: {e}")
-        return None, None
-
-
-
-
-# Attempt to import shared functions and constants from matrix_map.py
-# If matrix_map.py is in the same directory or Python path.
-try:
-    from matrix_map import load_map_from_json, save_map_json, \
-                           PATH_MARKER, FREE_SPACE_MARKER, UNKNOWN_MARKER
-except ImportError:
-    print("Warning: Could not import from matrix_map.py. Ensure it's in the Python path.")
-    print("Defining constants and I/O functions locally for path_planner.py.")
-
-    # --- Fallback definitions if import fails ---
-    PATH_MARKER = 1
-    FREE_SPACE_MARKER = 2
-    UNKNOWN_MARKER = 0
-
-    def save_map_json(map_array, map_resolution_val, filename="robot_map_custom.json"):
-        # (Copy the save_map_json function with custom formatting from your matrix_map.py here)
-        # For brevity, I'm omitting the full function here.
-        # Ensure it's the version that produces the desired custom-formatted JSON.
-        if not isinstance(map_array, np.ndarray): return
-        if not isinstance(map_resolution_val, (int, float)):
-            try: map_resolution_val = float(map_resolution_val)
-            except ValueError: print("Critical Error: map_resolution_val invalid."); return
-        map_list_of_lists = map_array.tolist()
-        outer_indent = "  "; row_indent = outer_indent * 2
-        formatted_rows = [row_indent + json.dumps(row, separators=(',', ':')) for row in map_list_of_lists]
-        map_layout_block = "[\n" + ",\n".join(formatted_rows) + "\n" + outer_indent + "]" if formatted_rows else "[]"
-        json_lines = ["{",
-                      outer_indent + f'"map_size": {json.dumps(map_array.shape[0])},',
-                      outer_indent + f'"map_resolution": {json.dumps(map_resolution_val)},',
-                      outer_indent + f'"map_layout": {map_layout_block}',"}"]
-        final_json_string = "\n".join(json_lines)
-        try:
-            with open(filename, 'w') as f: f.write(final_json_string)
-            print(f"Map successfully saved to {filename} (custom format).")
-        except Exception as e: print(f"Fallback save_map_json error: {e}")
-    # --- End of Fallback definitions ---
 
 SKELETON_PATH_WAYPOINT_START = 100  # Start numbering for the planned path cells
 
