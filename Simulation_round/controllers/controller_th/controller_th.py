@@ -8,6 +8,30 @@ from path_finder import save_optimal_path
 from visualize import visualize_map
 
 
+def stopwhenredSeeRed(frame):
+    isdet=isredDetected(frame)
+    if isdet:
+        left_motor.setVelocity(0.0)
+        right_motor.setVelocity(0.0)
+        return True
+    return False
+
+
+
+
+
+counter=0
+while robot.step(TIME_STEP) != -1:
+    counter=counter+1
+    if(counter>10):
+        print("Over")
+        break
+    left_motor.setVelocity(3)
+    right_motor.setVelocity(3)
+    update_position()
+    update_map()
+
+
 while robot.step(TIME_STEP) != -1:
 
     image = camera.getImage()
@@ -35,15 +59,22 @@ while robot.step(TIME_STEP) != -1:
     cv2.line(frame_with_line, (bottomzeroIndexes[0], line_y_top), (bottomzeroIndexes[0], line_y_bottom), (255, 0, 0), 2)
     cv2.line(frame_with_line, (bottomzeroIndexes[1], line_y_top), (bottomzeroIndexes[1], line_y_bottom), (255, 0, 0), 2)
     cv2.rectangle(frame_with_line, (20, height//2), (280, height), (0, 0, 0), 2)
+    cv2.rectangle(frame_with_line, ((width // 2)-25, (height//2)-10), ((width // 2)+25, (height//2) +70), (0, 0, 0), 2)
 
     midVal=int((midzeroIndexes[0]+midzeroIndexes[1])/2)
     midlength=midzeroIndexes[1]-midzeroIndexes[0]
     bottomval=int((bottomzeroIndexes[0]+bottomzeroIndexes[1])/2)
     bottomlength=bottomzeroIndexes[1]-bottomzeroIndexes[0]
     difval=midVal-bottomval
- #   print(f"MidVal: {midVal}, BottomVal: {bottomval}, MidLength: {midlength}, BottomLength: {bottomlength}, DifVal: {difval}")
-
-    if(midzeroIndexes==(-1,-1) or midzeroIndexes==(-2,-2)):
+    
+    if(not isredDetected(frame) and isredSeen==1):
+        left_motor.setVelocity(0.0)
+        right_motor.setVelocity(0.0)
+        break
+    elif(stopwhenredSeeRed(frame)):
+        isredSeen=1
+        decideDirection(150,width)
+    elif(midzeroIndexes==(-1,-1) or midzeroIndexes==(-2,-2)):
         left_motor.setVelocity(0.0)
         right_motor.setVelocity(0.0)
     else:

@@ -20,6 +20,43 @@ TURN_SPEED = 1.2
 G= 1.5  # Gain for turning correction
 
 
+def isredDetected(frame):
+    height, width, _ = frame.shape
+    
+    # Coordinates for the center 50x50 region
+    center_x, center_y = width // 2, height // 2
+    half_box = 25  # 50 // 2
+    x1, x2 = center_x - half_box, center_x + half_box
+    y1, y2 = (height//2)-10, (height//2) +70
+
+    # Crop the middle 50x50 region
+    center_region = frame[y1:y2, x1:x2]
+
+    # Convert the region to HSV
+    hsv = cv2.cvtColor(center_region, cv2.COLOR_BGR2HSV)
+
+    # Define red color range in HSV
+    lower_red1 = np.array([0, 100, 100])
+    upper_red1 = np.array([10, 255, 255])
+    lower_red2 = np.array([160, 100, 100])
+    upper_red2 = np.array([179, 255, 255])
+
+    # Create red masks
+    mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
+    mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
+    red_mask = cv2.bitwise_or(mask1, mask2)
+
+    # Count red pixels
+    red_pixels = cv2.countNonZero(red_mask)
+
+    if red_pixels > 0:
+        return True
+    else:
+        return False
+
+
+
+
 # Extract middle 1-pixel strip from the camera frame
 def get_middle_horizontal_strip(frame):
     height, width = frame.shape[:2]
