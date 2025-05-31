@@ -1,7 +1,7 @@
 import numpy as np
 import math
 from skimage.morphology import skeletonize
-# from scipy.interpolate import splprep, splev # Optional for advanced smoothing
+# from scipy.interpolate import splprep, splev # Not yet implemented
 
 from config import *
 from map_json import *
@@ -25,7 +25,7 @@ def find_neighbors_skel(r, c, skeleton_array):
 
 
 def find_centerline_path(current_map_array, path_marker_val, free_space_marker_val, 
-                         preferred_start_rc=None): # Added preferred_start_rc
+                         preferred_start_rc): 
     """
     Finds a centerline path using skeletonization and improved ordering.
     Tries to use preferred_start_rc if provided and valid.
@@ -93,15 +93,13 @@ def find_centerline_path(current_map_array, path_marker_val, free_space_marker_v
 
     # --- Determine the starting node for DFS trace ---
     start_node_trace = None
-    if preferred_start_rc:
-        if preferred_start_rc in largest_component_set:
-            start_node_trace = preferred_start_rc
-            print(f"Using preferred start point: {start_node_trace}")
-        else:
-            print(f"Warning: Preferred start point {preferred_start_rc} is not on the largest skeleton component. Finding an alternative start.")
+    if preferred_start_rc in largest_component_set:
+        start_node_trace = preferred_start_rc
+        print(f"Using preferred start point: {start_node_trace}")
+    else:
+        print(f"Warning: Preferred start point {preferred_start_rc} is not on the largest skeleton component. Finding an alternative start.")
 
     if start_node_trace is None: # If preferred start not used or not provided
-        # Fallback: try to find a point with fewer connections or just the first point
         min_degree = float('inf')
         # Build adjacency list only for the largest component for degree calculation
         adj_largest_comp_temp = {node: [] for node in largest_component_list}
@@ -118,7 +116,7 @@ def find_centerline_path(current_map_array, path_marker_val, free_space_marker_v
             elif start_node_trace is None and degree > 0: # First valid node if all have same min_degree > 0
                  start_node_trace = node
         
-        if start_node_trace is None: # Should not happen if largest_component_list is not empty
+        if start_node_trace is None: 
             start_node_trace = largest_component_list[0]
         print(f"Using automatically selected start point: {start_node_trace}")
 
@@ -169,16 +167,15 @@ def mark_ordered_path(map_to_modify, ordered_waypoints, start_value):
     print(f"Marked {len(ordered_waypoints)} waypoints, starting from value {start_value}.")
 
 
-# --- Main execution block for the path planner ---
-def save_path():
-    # Input: The JSON map file saved by your robot controller
-    # This should be a map populated with 0s, 1s (path), and 2s (free space)
-    input_json_map_file = "E:/Projects/PeraBots_2025/Simulation_round/controllers/controller_th/robot_map_2cm.json" # Or "robot_map_final_explored.json"
-                                                # Or "robot_map_sensor.json" from your upload
+# --- This is the function to be called from the controller ---
+def save_optimal_path(input_map,output_map,output_waypoint,start_point = (28, 78) ):
+    # Input: The JSON map file saved by robot controller, file names for output map and waypoints, DFS start point
+    # Input map should be a map populated with 0s, 1s (path), and 2s (free space)
+    input_json_map_file = input_map
 
     # Output files
-    output_map_with_path_file = "map_with_planned_centerline.json"
-    output_waypoints_file = "centerline_waypoints_ordered.json"
+    output_map_with_path_file = output_map
+    output_waypoints_file = output_waypoint
 
     print(f"Loading map from: {input_json_map_file}")
     map_data_array, map_resolution = load_map_from_json(input_json_map_file)
@@ -186,16 +183,13 @@ def save_path():
     if map_data_array is not None and map_resolution is not None:
         print(f"Map loaded. Shape: {map_data_array.shape}, Resolution: {map_resolution}")
 
-        # Find the centerline path
-        # These marker values should match how your map is generated.
-        user_defined_start_point_rc = (28, 78) 
+        
 
-        # ... later, when calling the function ...
         centerline_pts = find_centerline_path(
             map_data_array, 
             PATH_MARKER, 
             FREE_SPACE_MARKER,
-            preferred_start_rc=user_defined_start_point_rc # Pass it here
+            preferred_start_rc=start_point 
         )
 
         if centerline_pts:
@@ -207,31 +201,24 @@ def save_path():
 
             waypoints_for_json = []
             for r_np, c_np in centerline_pts:
-                waypoints_for_json.append((int(r_np), int(c_np))) # Explicit conversion to int
+                waypoints_for_json.append((int(r_np), int(c_np))) # conversion to standard int from numpy int
 
-            # Ensure map_shape elements are also standard Python ints
+            # Ensure map_shape elements are also standard Python ints due to typeError which was raised earlier
             map_shape_for_json = [int(s) for s in map_data_array.shape]
 
             waypoints_data_to_save = {
-                "map_resolution": map_resolution, # Should be a float
-                "map_size_cells": map_shape_for_json, # Use the converted list
-                "path_start_value_in_map": SKELETON_PATH_WAYPOINT_START, # This is already a Python int
-                "ordered_waypoints_rc": waypoints_for_json # Use the list with converted ints
+                "map_resolution": map_resolution, 
+                "map_size_cells": map_shape_for_json, 
+                "path_start_value_in_map": SKELETON_PATH_WAYPOINT_START, 
+                "ordered_waypoints_rc": waypoints_for_json 
             }
             try:
                 with open(output_waypoints_file, "w") as f_wp:
-                    json.dump(waypoints_data_to_save, f_wp, indent=2) # indent=2 is good for this file
+                    json.dump(waypoints_data_to_save, f_wp, indent=2) 
                 print(f"Ordered waypoints saved to {output_waypoints_file}")
-            except TypeError as te: # Catch TypeError specifically if it still occurs
+            except TypeError as te: 
                 print(f"A TypeError occurred during waypoint saving: {te}. "
                       "Please check all data types in 'waypoints_data_to_save'.")
-                # For debugging, print the types:
-                # for key, value in waypoints_data_to_save.items():
-                #     if key == "ordered_waypoints_rc":
-                #         if value:
-                #             print(f"Type of first waypoint coord: type({value[0][0]}), type({value[0][1]})")
-                #     else:
-                #         print(f"Type of {key}: {type(value)}")
             except Exception as e:
                 print(f"Error saving ordered waypoints: {e}")
             
