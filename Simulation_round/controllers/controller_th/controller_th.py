@@ -24,7 +24,6 @@ counter=0
 while robot.step(TIME_STEP) != -1:
     counter=counter+1
     if(counter>20):
-        print("Over")
         break
     left_motor.setVelocity(3)
     right_motor.setVelocity(3)

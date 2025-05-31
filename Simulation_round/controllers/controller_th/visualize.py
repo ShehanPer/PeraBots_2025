@@ -5,14 +5,12 @@ from map_json import load_map_from_json
 
 
 # --- Configuration ---
-# Define the mapping from your map values to RGB colors
-# You can customize these colors as you like.
+# Define the mapping from  map values to RGB colors
 COLOR_MAP = {
     0: (220, 220, 220),  # Light Gray for Unknown/Empty (value 0)
     1: (0, 0, 255),      # Blue for Robot Path (value 1)
     2: (0, 255, 0),      # Green for Observed Free Space (value 2)
-    # You can add more mappings if you use other values, e.g.:
-    # 3: (255, 0, 0),      # Red for Obstacles (if you add value 3 later)
+
 }
 DEFAULT_COLOR = (0, 0, 0) # Black for any unexpected map values
 
@@ -43,7 +41,6 @@ def create_map_image(map_array, output_image_filename="map_visualization.png", c
 
     # Create a new RGB image
     image = Image.new("RGB", (img_width, img_height))
-    pixels = image.load() # Allows direct pixel manipulation (though slower for blocks)
 
     # Efficiently draw colored blocks for each cell
     draw_context = ImageDraw.Draw(image)
@@ -61,9 +58,7 @@ def create_map_image(map_array, output_image_filename="map_visualization.png", c
             # Calculate the pixel coordinates for the top-left corner of the cell block
             x0 = c_cell * cell_pixel_size
             y0 = r_cell * cell_pixel_size
-            # Calculate the bottom-right corner
-            x1 = x0 + cell_pixel_size -1 # If cell_pixel_size is 1, x1=x0
-            y1 = y0 + cell_pixel_size -1 # If cell_pixel_size is 1, y1=y0
+
             
             rect_x1 = x0 + cell_pixel_size
             rect_y1 = y0 + cell_pixel_size
@@ -81,15 +76,15 @@ def create_map_image(map_array, output_image_filename="map_visualization.png", c
     except Exception as e:
         print(f"An unexpected error occurred while saving image: {e}")
 
-# --- Main part of the script ---
+# --- Main function to be called from outside ---
 def visualize_map(map_json_path):
     # Path to saved JSON map file
-    json_map_file_path = map_json_path # Make sure this file is in the same directory 
+    json_map_file_path = map_json_path # Make sure file is in the same directory 
     
     # Desired name for the output image
     output_image_file_path = "robot_map.png"
 
-    pixels_per_cell = 20        # How many pixels to use for each map cell in the output image
+    pixels_per_cell = 20    # How many pixels to use for each map cell in the output image
 
 
     print(f"Attempting to load map from: {json_map_file_path}")
