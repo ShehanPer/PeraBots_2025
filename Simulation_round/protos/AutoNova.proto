@@ -52,8 +52,8 @@ Robot {
       rotation 0 1 0 0.59  # -30 degrees in radians = -0.5236
       translation 0.054 0 0.07
       fieldOfView 2.5
-      width 640
-      height 150
+      width 300
+      height 200
       name "camera"
     }
     # New Left Wheel

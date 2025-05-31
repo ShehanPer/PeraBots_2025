@@ -3,33 +3,8 @@ import numpy as np
 from config import *
 from movemap import *
 from matrix_map import *
+from path_finder import save_path
 
-
-
-
-
-# Initialize Keyboard
-keyboard = robot.getKeyboard()
-keyboard.enable(TIME_STEP)
-
-
-set_movemap_Devices(left_motor, right_motor, camera, sensors,left_encoder,right_encoder,imu,gyro,right_IR,left_IR )
-
-
-
-
-def print_path_map(path_map, robot_x, robot_y):
-    rows, cols = path_map.shape
-    for r in range(rows):
-        line = ''
-        for c in range(cols):
-            if r == robot_y and c == robot_x:
-                line += 'R'  # Robot current position
-            elif path_map[r, c] == 1:
-                line += '*'
-            else:
-                line += '.'
-        print(line)
 
 
 
@@ -43,20 +18,15 @@ while robot.step(TIME_STEP) != -1:
     img_array = np.frombuffer(image, np.uint8).reshape((height, width, 4))
     frame = cv2.cvtColor(img_array, cv2.COLOR_BGRA2BGR)
     height, width = frame.shape[:2]
-    #print("Width:", width, "Height:", height)
-    middlestrip,bottomstrip,frame_with_line=get_middle_horizontal_strip(frame)
-    #print(len(middlestrip))
+    middlestrip,bottomstrip,blacktestStrip,frame_with_line=get_middle_horizontal_strip(frame)
 
+    blacktestStripArray=getcolorArray(blacktestStrip)
     middlecolArray=getcolorArray(middlestrip)
     bottomcolArray=getcolorArray(bottomstrip)
-    # print(middlecolArray)
-    # print(bottomcolArray)
 
     midzeroIndexes=find_longest_zero_run(middlecolArray)
     bottomzeroIndexes=find_longest_zero_run(bottomcolArray)
 
-    print(f"Middle Zero indexes: {midzeroIndexes}")
-    print(f"Bottom Zero indexes: {bottomzeroIndexes}")
     line_y_top = 0
     line_y_bottom = frame_with_line.shape[0] 
     cv2.line(frame_with_line, (midzeroIndexes[0], line_y_top), (midzeroIndexes[0], line_y_bottom), (0, 255, 0), 2)
@@ -64,21 +34,26 @@ while robot.step(TIME_STEP) != -1:
 
     cv2.line(frame_with_line, (bottomzeroIndexes[0], line_y_top), (bottomzeroIndexes[0], line_y_bottom), (255, 0, 0), 2)
     cv2.line(frame_with_line, (bottomzeroIndexes[1], line_y_top), (bottomzeroIndexes[1], line_y_bottom), (255, 0, 0), 2)
+    cv2.rectangle(frame_with_line, (20, height//2), (280, height), (0, 0, 0), 2)
+
+    midVal=int((midzeroIndexes[0]+midzeroIndexes[1])/2)
+    midlength=midzeroIndexes[1]-midzeroIndexes[0]
+    bottomval=int((bottomzeroIndexes[0]+bottomzeroIndexes[1])/2)
+    bottomlength=bottomzeroIndexes[1]-bottomzeroIndexes[0]
+    difval=midVal-bottomval
+    print(f"MidVal: {midVal}, BottomVal: {bottomval}, MidLength: {midlength}, BottomLength: {bottomlength}, DifVal: {difval}")
 
     if(midzeroIndexes==(-1,-1) or midzeroIndexes==(-2,-2)):
-        print(f"Problem is encountered.....{midzeroIndexes}")
         left_motor.setVelocity(0.0)
         right_motor.setVelocity(0.0)
     else:
-        if(midzeroIndexes[1]-midzeroIndexes[0]<90):
-            if(bottomzeroIndexes==(-1,-1) or bottomzeroIndexes==(-2,-2)):
-                print(f"Problem is encountered.....{bottomzeroIndexes}")
-                left_motor.setVelocity(0.0)
-                right_motor.setVelocity(0.0)
-            else:
-                decideDirection(int((bottomzeroIndexes[0]+bottomzeroIndexes[1])/2),width)
+        if((blacktestStripArray[20]==1 or blacktestStripArray[280]==1 )and bottomzeroIndexes not in [(-1, -1), (-2, -2)] ):
+            decideDirection(bottomval-difval/2,width)
+        elif(bottomzeroIndexes not in [(-1, -1), (-2, -2)] and midlength > 90 ):
+            decideDirection(bottomval,width)
         else:
-            decideDirection(int((midzeroIndexes[0]+midzeroIndexes[1])/2),width)
+            decideDirection(midVal,width)
+
 
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -89,7 +64,9 @@ while robot.step(TIME_STEP) != -1:
     update_map()
     current_simulation_time = robot.getTime()
     if current_simulation_time % 5 == 0:
-         print(f"Sim time: {robot.getTime():.2f}s - Saving map...")
-         # Ensure MAP_RES (from matrix_map.py) is accessible or pass it
-         save_map_json(MAP, MAP_RES, f"robot_map_2cm.json")
+        print(f"Sim time: {robot.getTime():.2f}s - Saving map...")
+        # Ensure MAP_RES (from matrix_map.py) is accessible or pass it
+        save_map_json(MAP, MAP_RES, f"robot_map_final.json")
 cv2.destroyAllWindows()
+
+
