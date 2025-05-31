@@ -7,4 +7,4 @@ centralWidgetVisible: 1
 orthographicViewHeight: 1
 textFiles: 0 "controllers/NewControllerT/NewControllerT.py"
 consoles: Console:All:All
-renderingDevicePerspectives: Phoenix:camera;1;1;0;0
+renderingDevicePerspectives: Phoenix:camera;0;1;0;0

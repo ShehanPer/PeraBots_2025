@@ -94,8 +94,12 @@ def create_map_image(map_array, output_image_filename="map_visualization.png", c
     for r_cell in range(map_height_cells):  # r_cell is row index in map_array
         for c_cell in range(map_width_cells): # c_cell is column index in map_array
             map_value = map_array[r_cell, c_cell]
-            color = COLOR_MAP.get(map_value, DEFAULT_COLOR)
+            
+            if map_value >= 99: # Assuming this constant is known or passed
+                color = (255, 0, 255) # Magenta for planned path waypoints
 
+            else:
+                color = COLOR_MAP.get(map_value, DEFAULT_COLOR)
             # Calculate the pixel coordinates for the top-left corner of the cell block
             x0 = c_cell * cell_pixel_size
             y0 = r_cell * cell_pixel_size
@@ -131,10 +135,10 @@ def create_map_image(map_array, output_image_filename="map_visualization.png", c
 # --- Main part of the script ---
 if __name__ == "__main__":
     # Path to your saved JSON map file (the one you uploaded)
-    json_map_file_path = "E:/Projects/PeraBots_2025/Simulation_round/controllers/NewControllerT/robot_map_2cm.json" # Make sure this file is in the same directory or provide full path
+    json_map_file_path = "map_with_planned_centerline.json" # Make sure this file is in the same directory or provide full path
     
     # Desired name for the output image
-    output_image_file_path = "map_generated_2cm.png"
+    output_image_file_path = "map_generated_path.png"
 
     # How many pixels to use for each map cell in the output image
     # If your map is 50x50:

@@ -10,22 +10,34 @@ from map_json import *
 
 SKELETON_PATH_WAYPOINT_START = 100  # Start numbering for the planned path cells
 
-def find_neighbors(r, c, shape):
-    """ Helper to find 8-connectivity neighbors within bounds """
+def find_neighbors_skel(r, c, skeleton_array):
+    """ Helper to find 8-connectivity neighbors that are part of the skeleton. """
     neighbors = []
+    shape = skeleton_array.shape
     for dr in [-1, 0, 1]:
         for dc in [-1, 0, 1]:
             if dr == 0 and dc == 0:
                 continue
             nr, nc = r + dr, c + dc
-            if 0 <= nr < shape[0] and 0 <= nc < shape[1]:
+            if 0 <= nr < shape[0] and 0 <= nc < shape[1] and skeleton_array[nr, nc]:
                 neighbors.append((nr, nc))
     return neighbors
 
-def find_centerline_path(current_map_array, path_marker_val, free_space_marker_val):
+
+def find_centerline_path(current_map_array, path_marker_val, free_space_marker_val, 
+                         preferred_start_rc=None): # Added preferred_start_rc
     """
-    Finds a centerline path using skeletonization and attempts to order it.
-    Returns an ordered list of (row, col) tuples.
+    Finds a centerline path using skeletonization and improved ordering.
+    Tries to use preferred_start_rc if provided and valid.
+
+    Args:
+        current_map_array (np.ndarray): The input map.
+        path_marker_val (int): Value for robot's traversed path.
+        free_space_marker_val (int): Value for confirmed free space.
+        preferred_start_rc (tuple, optional): Preferred (row, col) to start path ordering.
+
+    Returns:
+        list: An ordered list of (row, col) tuples representing the centerline path.
     """
     print("Starting centerline path finding...")
     traversable_map = np.zeros_like(current_map_array, dtype=bool)
@@ -36,85 +48,115 @@ def find_centerline_path(current_map_array, path_marker_val, free_space_marker_v
         return []
 
     skeleton = skeletonize(traversable_map)
-    print(f"Skeletonization complete. Found {np.sum(skeleton)} skeleton pixels.")
+    total_skeleton_pixels = np.sum(skeleton)
+    print(f"Skeletonization complete. Found {total_skeleton_pixels} skeleton pixels.")
 
-    if not np.any(skeleton):
+    if total_skeleton_pixels == 0:
         print("Skeletonization resulted in an empty path.")
         return []
 
     skeleton_pixels_coords = np.argwhere(skeleton)
-    if len(skeleton_pixels_coords) == 0:
+    
+    # --- Find Connected Components and select the largest one ---
+    nodes = {tuple(p) for p in skeleton_pixels_coords} # Use a set for efficient lookup
+    visited_for_components = set()
+    all_components = []
+
+    for r_node_start, c_node_start in nodes: 
+        start_node_comp = (r_node_start, c_node_start)
+        if start_node_comp not in visited_for_components:
+            current_component_nodes = []
+            q_comp = [start_node_comp]
+            visited_bfs_component = {start_node_comp}
+            
+            head = 0
+            while head < len(q_comp):
+                curr_comp_node = q_comp[head]; head += 1
+                current_component_nodes.append(curr_comp_node)
+                visited_for_components.add(curr_comp_node)
+                for neighbor in find_neighbors_skel(curr_comp_node[0], curr_comp_node[1], skeleton):
+                    if neighbor not in visited_bfs_component:
+                        visited_bfs_component.add(neighbor)
+                        q_comp.append(neighbor)
+            all_components.append(current_component_nodes)
+            
+    if not all_components:
+        print("No connected components found in the skeleton.")
         return []
 
-    # Build adjacency list for skeleton pixels
-    adj = {tuple(p): [] for p in skeleton_pixels_coords}
-    pixel_set = set(map(tuple, skeleton_pixels_coords)) # For quick lookups
-
-    for r, c in skeleton_pixels_coords:
-        for nr, nc in find_neighbors(r, c, skeleton.shape):
-            if (nr, nc) in pixel_set:
-                adj[(r, c)].append((nr, nc))
-
-    # Attempt to find a long, ordered path using DFS
-    # This is a basic DFS; for complex tracks, more sophisticated graph traversal might be needed
-    # (e.g., finding endpoints, handling junctions more gracefully for loops)
+    largest_component_list = max(all_components, key=len)
+    largest_component_set = set(largest_component_list) # For efficient "in" check
+    print(f"Found {len(all_components)} skeleton component(s). Largest has {len(largest_component_list)} pixels.")
     
-    start_node = tuple(skeleton_pixels_coords[0]) # Arbitrary start
+    if not largest_component_list:
+        return []
+
+    # --- Determine the starting node for DFS trace ---
+    start_node_trace = None
+    if preferred_start_rc:
+        if preferred_start_rc in largest_component_set:
+            start_node_trace = preferred_start_rc
+            print(f"Using preferred start point: {start_node_trace}")
+        else:
+            print(f"Warning: Preferred start point {preferred_start_rc} is not on the largest skeleton component. Finding an alternative start.")
+
+    if start_node_trace is None: # If preferred start not used or not provided
+        # Fallback: try to find a point with fewer connections or just the first point
+        min_degree = float('inf')
+        # Build adjacency list only for the largest component for degree calculation
+        adj_largest_comp_temp = {node: [] for node in largest_component_list}
+        for r_node, c_node in largest_component_list:
+            for nr, nc in find_neighbors_skel(r_node, c_node, skeleton):
+                if (nr,nc) in largest_component_set:
+                     adj_largest_comp_temp[(r_node, c_node)].append((nr, nc))
+
+        for node in largest_component_list:
+            degree = len(adj_largest_comp_temp.get(node,[]))
+            if degree > 0 and degree < min_degree : 
+                min_degree = degree
+                start_node_trace = node
+            elif start_node_trace is None and degree > 0: # First valid node if all have same min_degree > 0
+                 start_node_trace = node
+        
+        if start_node_trace is None: # Should not happen if largest_component_list is not empty
+            start_node_trace = largest_component_list[0]
+        print(f"Using automatically selected start point: {start_node_trace}")
+
+
+    # --- Perform DFS trace on the largest component from the chosen start_node_trace ---
+    adj_largest_comp = {node: [] for node in largest_component_list}
+    for r_node, c_node in largest_component_list:
+        for nr, nc in find_neighbors_skel(r_node, c_node, skeleton):
+            if (nr,nc) in largest_component_set:
+                 adj_largest_comp[(r_node, c_node)].append((nr, nc))
+
     ordered_path = []
-    stack = [(start_node, [start_node])] # (current_node, path_so_far)
-    visited_dfs = {start_node} # Keep track of visited nodes in the current DFS path search
-                               # to avoid trivial cycles within a single DFS exploration.
-                               # For global "longest path", this might need adjustment.
+    stack = [start_node_trace]
+    visited_in_trace = set()
 
-    # We're looking for one continuous path. If the skeleton is a clean loop or line,
-    # a simple DFS should trace it.
-    
-    # Simpler tracing for a single continuous path/loop:
-    ordered_path_trace = []
-    q = [start_node] # Queue for BFS-like neighbor finding, or stack for DFS
-    visited_trace = {start_node}
-    ordered_path_trace.append(start_node)
-
-    current_trace_point = start_node
-    while True:
-        found_next_in_trace = False
-        # Find an unvisited neighbor of the current_trace_point
-        # Prefer neighbors that maintain a "straighter" line if possible (more complex)
-        # For now, just take any unvisited neighbor
+    while stack:
+        current_node = stack.pop()
+        if current_node in visited_in_trace:
+            continue
+        visited_in_trace.add(current_node)
+        ordered_path.append(current_node)
         
-        # Get neighbors of current_trace_point from precomputed adjacency list
-        # Sort neighbors to have some deterministic behavior if multiple choices (optional)
-        # neighbors_of_current = sorted(adj[current_trace_point]) 
-
-        unvisited_neighbors = [n for n in adj[current_trace_point] if n not in visited_trace]
-
-        if unvisited_neighbors:
-            # Simple strategy: pick the first unvisited neighbor
-            # For a cleaner path, you might sort neighbors or use heuristics
-            next_node = unvisited_neighbors[0]
-            ordered_path_trace.append(next_node)
-            visited_trace.add(next_node)
-            current_trace_point = next_node
-            found_next_in_trace = True
-        
-        if not found_next_in_trace:
-            # No more unvisited direct neighbors from current_trace_point
-            # This could be an endpoint, or we are stuck if it's a complex graph.
-            # If len(visited_trace) < len(pixel_set), there are other components or we need to backtrack (full DFS)
-            # For a single loop/path, this simple trace might be okay.
-            break 
+        # Add unvisited neighbors from the largest component to the stack.
+        # Sort for some determinism, reverse=True often explores one branch "fully".
+        neighbors_to_visit = sorted(
+            [n for n in adj_largest_comp.get(current_node, []) if n not in visited_in_trace],
+            reverse=True 
+        )
+        for neighbor in neighbors_to_visit:
+            stack.append(neighbor)
             
-    # If the trace didn't visit all skeleton pixels (e.g. branches), it's incomplete.
-    # The definition of "optimal" is key. If it's just "a centerline", this is one.
-    if len(ordered_path_trace) < len(pixel_set) * 0.8: # Heuristic: if we missed a lot
-        print(f"Warning: DFS trace might be incomplete. Visited {len(ordered_path_trace)} of {len(pixel_set)} skeleton pixels.")
-        print("Using the longest found continuous segment. For complex tracks, enhance path ordering.")
-        # Fallback to the raw (unordered) list if trace is too short and raw list is better.
-        # This part depends on how critical perfect ordering vs. any centerline is.
-        # For now, we'll use what ordered_path_trace found.
+    if len(ordered_path) != len(largest_component_list):
+        print(f"Warning: Path trace visited {len(ordered_path)} waypoints, "
+              f"but largest component had {len(largest_component_list)} pixels. Path might be incomplete (e.g. if preferred start was in a smaller disconnected part of the chosen component).")
+    else:
+        print(f"Path ordering complete. Generated {len(ordered_path)} waypoints from the largest component.")
     
-    print(f"Path ordering complete. Generated {len(ordered_path_trace)} waypoints.")
-    return ordered_path_trace
+    return ordered_path
 
 
 def mark_ordered_path(map_to_modify, ordered_waypoints, start_value):
@@ -128,10 +170,10 @@ def mark_ordered_path(map_to_modify, ordered_waypoints, start_value):
 
 
 # --- Main execution block for the path planner ---
-if __name__ == "__main__":
+def save_path():
     # Input: The JSON map file saved by your robot controller
     # This should be a map populated with 0s, 1s (path), and 2s (free space)
-    input_json_map_file = "robot_map_2cm.json" # Or "robot_map_final_explored.json"
+    input_json_map_file = "E:/Projects/PeraBots_2025/Simulation_round/controllers/controller_th/robot_map_2cm.json" # Or "robot_map_final_explored.json"
                                                 # Or "robot_map_sensor.json" from your upload
 
     # Output files
@@ -146,9 +188,15 @@ if __name__ == "__main__":
 
         # Find the centerline path
         # These marker values should match how your map is generated.
-        centerline_pts = find_centerline_path(map_data_array, 
-                                              path_marker_val=PATH_MARKER, 
-                                              free_space_marker_val=FREE_SPACE_MARKER)
+        user_defined_start_point_rc = (28, 78) 
+
+        # ... later, when calling the function ...
+        centerline_pts = find_centerline_path(
+            map_data_array, 
+            PATH_MARKER, 
+            FREE_SPACE_MARKER,
+            preferred_start_rc=user_defined_start_point_rc # Pass it here
+        )
 
         if centerline_pts:
             map_with_centerline = np.copy(map_data_array)
@@ -157,26 +205,34 @@ if __name__ == "__main__":
             # Save the map with the visualized ordered path
             save_map_json(map_with_centerline, map_resolution, output_map_with_path_file)
 
-            # Save the ordered waypoints (list of [row, col])
+            waypoints_for_json = []
+            for r_np, c_np in centerline_pts:
+                waypoints_for_json.append((int(r_np), int(c_np))) # Explicit conversion to int
+
+            # Ensure map_shape elements are also standard Python ints
+            map_shape_for_json = [int(s) for s in map_data_array.shape]
+
             waypoints_data_to_save = {
-                "map_resolution": map_resolution,
-                "map_size_cells": list(map_data_array.shape),
-                "path_start_value_in_map": SKELETON_PATH_WAYPOINT_START,
-                "ordered_waypoints_rc": centerline_pts # [row, column]
+                "map_resolution": map_resolution, # Should be a float
+                "map_size_cells": map_shape_for_json, # Use the converted list
+                "path_start_value_in_map": SKELETON_PATH_WAYPOINT_START, # This is already a Python int
+                "ordered_waypoints_rc": waypoints_for_json # Use the list with converted ints
             }
             try:
                 with open(output_waypoints_file, "w") as f_wp:
-                    json.dump(waypoints_data_to_save, f_wp, indent=2)
+                    json.dump(waypoints_data_to_save, f_wp, indent=2) # indent=2 is good for this file
                 print(f"Ordered waypoints saved to {output_waypoints_file}")
+            except TypeError as te: # Catch TypeError specifically if it still occurs
+                print(f"A TypeError occurred during waypoint saving: {te}. "
+                      "Please check all data types in 'waypoints_data_to_save'.")
+                # For debugging, print the types:
+                # for key, value in waypoints_data_to_save.items():
+                #     if key == "ordered_waypoints_rc":
+                #         if value:
+                #             print(f"Type of first waypoint coord: type({value[0][0]}), type({value[0][1]})")
+                #     else:
+                #         print(f"Type of {key}: {type(value)}")
             except Exception as e:
                 print(f"Error saving ordered waypoints: {e}")
             
-            print("\nPath planning complete. You can now visualize:")
-            print(f" - Map with numbered path: {output_map_with_path_file}")
-            print(" - Waypoint coordinates: " + output_waypoints_file)
-            print("Remember to update your visualize.py COLOR_MAP if needed for new marker values.")
-
-        else:
-            print("Failed to generate a centerline path.")
-    else:
-        print(f"Failed to load map from {input_json_map_file}. Path planning cannot proceed.")
+            print("\nPath planning complete. You can now visualize:") # etc.
