@@ -1,7 +1,7 @@
 import numpy as np
 import math
 from skimage.morphology import skeletonize
-# from scipy.interpolate import splprep, splev # Optional for advanced smoothing
+# from scipy.interpolate import splprep, splev # Not yet implemented
 
 from config import *
 from map_json import *
@@ -100,7 +100,6 @@ def find_centerline_path(current_map_array, path_marker_val, free_space_marker_v
         print(f"Warning: Preferred start point {preferred_start_rc} is not on the largest skeleton component. Finding an alternative start.")
 
     if start_node_trace is None: # If preferred start not used or not provided
-        # Fallback: try to find a point with fewer connections or just the first point
         min_degree = float('inf')
         # Build adjacency list only for the largest component for degree calculation
         adj_largest_comp_temp = {node: [] for node in largest_component_list}
@@ -117,7 +116,7 @@ def find_centerline_path(current_map_array, path_marker_val, free_space_marker_v
             elif start_node_trace is None and degree > 0: # First valid node if all have same min_degree > 0
                  start_node_trace = node
         
-        if start_node_trace is None: # Should not happen if largest_component_list is not empty
+        if start_node_trace is None: 
             start_node_trace = largest_component_list[0]
         print(f"Using automatically selected start point: {start_node_trace}")
 
@@ -168,10 +167,10 @@ def mark_ordered_path(map_to_modify, ordered_waypoints, start_value):
     print(f"Marked {len(ordered_waypoints)} waypoints, starting from value {start_value}.")
 
 
-# --- Main execution block for the path planner ---
+# --- This is the function to be called from the controller ---
 def save_optimal_path(input_map,output_map,output_waypoint,start_point = (28, 78) ):
-    # Input: The JSON map file saved by robot controller
-    # This should be a map populated with 0s, 1s (path), and 2s (free space)
+    # Input: The JSON map file saved by robot controller, file names for output map and waypoints, DFS start point
+    # Input map should be a map populated with 0s, 1s (path), and 2s (free space)
     input_json_map_file = input_map
 
     # Output files
@@ -190,7 +189,7 @@ def save_optimal_path(input_map,output_map,output_waypoint,start_point = (28, 78
             map_data_array, 
             PATH_MARKER, 
             FREE_SPACE_MARKER,
-            preferred_start_rc=start_point # Optional: specify a preferred start point for path ordering
+            preferred_start_rc=start_point 
         )
 
         if centerline_pts:
@@ -204,7 +203,7 @@ def save_optimal_path(input_map,output_map,output_waypoint,start_point = (28, 78
             for r_np, c_np in centerline_pts:
                 waypoints_for_json.append((int(r_np), int(c_np))) # conversion to standard int from numpy int
 
-            # Ensure map_shape elements are also standard Python ints due to typeError which was raised
+            # Ensure map_shape elements are also standard Python ints due to typeError which was raised earlier
             map_shape_for_json = [int(s) for s in map_data_array.shape]
 
             waypoints_data_to_save = {

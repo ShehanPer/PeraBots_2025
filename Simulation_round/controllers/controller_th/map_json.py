@@ -20,7 +20,6 @@ def save_map_json(map_array, map_resolution_val, filename="robot_map.json"):
     if not isinstance(map_resolution_val, (int, float)):
         print(f"Error: map_resolution_val '{map_resolution_val}' must be a number.")
         # Attempt to convert if it's a string representation of a number,
-        # otherwise this will cause issues in JSON formatting.
         try:
             map_resolution_val = float(map_resolution_val)
         except ValueError:
@@ -36,7 +35,6 @@ def save_map_json(map_array, map_resolution_val, filename="robot_map.json"):
     # 1. Format each row in map_layout compactly
     formatted_rows = []
     for row in map_list_of_lists:
-        # json.dumps for a simple list with compact separators
         row_str_compact = json.dumps(row, separators=(',', ':'))
         formatted_rows.append(row_indent + row_str_compact)
 
@@ -47,12 +45,11 @@ def save_map_json(map_array, map_resolution_val, filename="robot_map.json"):
         map_layout_block = "[]" # Handle empty map
 
     # 3. Construct the full JSON string manually
-    # We use json.dumps for individual values to ensure correct JSON formatting (e.g., numbers vs strings)
     json_lines = [
         "{",
         outer_indent + f'"map_size": {json.dumps(map_array.shape[0])},',
-        outer_indent + f'"map_resolution": {json.dumps(map_resolution_val)},', # map_resolution_val is now a number
-        outer_indent + f'"map_layout": {map_layout_block}', # map_layout_block is already a string
+        outer_indent + f'"map_resolution": {json.dumps(map_resolution_val)},',
+        outer_indent + f'"map_layout": {map_layout_block}',
         "}"
     ]
     final_json_string = "\n".join(json_lines)
@@ -87,15 +84,14 @@ def load_map_from_json(filename="robot_map.json"):
                     loaded_map_res = float(loaded_map_res_raw)
                 except ValueError:
                     print(f"Error: Cannot convert loaded map_resolution '{loaded_map_res_raw}' to a float.")
-                    # Decide: return None for resolution, raise error, or use a default.
-                    # For now, we'll proceed with loaded_map_res as None if conversion fails.
+                    
         else:
             print("Warning: 'map_resolution' not found in JSON or is null.")
 
 
         if map_list is None:
             print(f"Error: 'map_layout' not found in {filename}.")
-            return None, None # Must have map_layout
+            return None, None 
 
         map_array = np.array(map_list, dtype=int) 
         

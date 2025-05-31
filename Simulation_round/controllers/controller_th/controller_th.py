@@ -91,12 +91,9 @@ while robot.step(TIME_STEP) != -1:
         break
     cv2.imshow("Middle Strip", frame_with_line)
 
-
     update_position()
     update_map()
  
-
-
 
 
 cv2.destroyAllWindows()
@@ -104,7 +101,6 @@ cv2.destroyAllWindows()
 left_motor.setVelocity(0.0)
 right_motor.setVelocity(0.0)
 
-#saving json. THis will be automated to run once robot coplete travelling in the maze once.
 print(f"Sim time: {robot.getTime():.2f}s - Saving map...")
 save_map_json(MAP, MAP_RES, f"robot_map.json")
 sleep(1)
