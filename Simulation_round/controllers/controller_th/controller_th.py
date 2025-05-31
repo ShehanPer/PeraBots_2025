@@ -3,7 +3,7 @@ import numpy as np
 from config import *
 from movemap import *
 from matrix_map import *
-from path_finder import save_path
+from path_finder import save_optimal_path
 
 
 

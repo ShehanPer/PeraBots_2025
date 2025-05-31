@@ -170,11 +170,10 @@ def mark_ordered_path(map_to_modify, ordered_waypoints, start_value):
 
 
 # --- Main execution block for the path planner ---
-def save_path():
-    # Input: The JSON map file saved by your robot controller
+def save_optimal_path(json_map_file):
+    # Input: The JSON map file saved by robot controller
     # This should be a map populated with 0s, 1s (path), and 2s (free space)
-    input_json_map_file = "E:/Projects/PeraBots_2025/Simulation_round/controllers/controller_th/robot_map_2cm.json" # Or "robot_map_final_explored.json"
-                                                # Or "robot_map_sensor.json" from your upload
+    input_json_map_file = json_map_file 
 
     # Output files
     output_map_with_path_file = "map_with_planned_centerline.json"
@@ -207,31 +206,24 @@ def save_path():
 
             waypoints_for_json = []
             for r_np, c_np in centerline_pts:
-                waypoints_for_json.append((int(r_np), int(c_np))) # Explicit conversion to int
+                waypoints_for_json.append((int(r_np), int(c_np))) # conversion to standard int from numpy int
 
-            # Ensure map_shape elements are also standard Python ints
+            # Ensure map_shape elements are also standard Python ints due to typeError which was raised
             map_shape_for_json = [int(s) for s in map_data_array.shape]
 
             waypoints_data_to_save = {
-                "map_resolution": map_resolution, # Should be a float
-                "map_size_cells": map_shape_for_json, # Use the converted list
-                "path_start_value_in_map": SKELETON_PATH_WAYPOINT_START, # This is already a Python int
-                "ordered_waypoints_rc": waypoints_for_json # Use the list with converted ints
+                "map_resolution": map_resolution, 
+                "map_size_cells": map_shape_for_json, 
+                "path_start_value_in_map": SKELETON_PATH_WAYPOINT_START, 
+                "ordered_waypoints_rc": waypoints_for_json 
             }
             try:
                 with open(output_waypoints_file, "w") as f_wp:
-                    json.dump(waypoints_data_to_save, f_wp, indent=2) # indent=2 is good for this file
+                    json.dump(waypoints_data_to_save, f_wp, indent=2) 
                 print(f"Ordered waypoints saved to {output_waypoints_file}")
-            except TypeError as te: # Catch TypeError specifically if it still occurs
+            except TypeError as te: 
                 print(f"A TypeError occurred during waypoint saving: {te}. "
                       "Please check all data types in 'waypoints_data_to_save'.")
-                # For debugging, print the types:
-                # for key, value in waypoints_data_to_save.items():
-                #     if key == "ordered_waypoints_rc":
-                #         if value:
-                #             print(f"Type of first waypoint coord: type({value[0][0]}), type({value[0][1]})")
-                #     else:
-                #         print(f"Type of {key}: {type(value)}")
             except Exception as e:
                 print(f"Error saving ordered waypoints: {e}")
             

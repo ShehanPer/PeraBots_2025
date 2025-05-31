@@ -1,6 +1,8 @@
 import json
 import numpy as np
 from PIL import Image,ImageDraw # Import the Pillow library
+from map_json import load_map_from_json
+
 
 # --- Configuration ---
 # Define the mapping from your map values to RGB colors
@@ -14,51 +16,6 @@ COLOR_MAP = {
 }
 DEFAULT_COLOR = (0, 0, 0) # Black for any unexpected map values
 
-# --- Function to load the map from JSON ---
-# This function is based on our previous discussions.
-def load_map_from_json(filename="robot_map.json"):
-    """
-    Loads a map from a JSON file and returns the map array and its resolution.
-    """
-    try:
-        with open(filename, 'r') as f:
-            map_data_loaded = json.load(f)
-        
-        map_list = map_data_loaded.get("map_layout")
-        # loaded_map_size = map_data_loaded.get("map_size") # Can be used for validation
-        loaded_map_res_raw = map_data_loaded.get("map_resolution")
-        loaded_map_res = None
-
-        if loaded_map_res_raw is not None:
-            if isinstance(loaded_map_res_raw, (int, float)):
-                loaded_map_res = loaded_map_res_raw
-            else:
-                print(f"Warning: Loaded map_resolution '{loaded_map_res_raw}' is not a direct number. Attempting conversion.")
-                try:
-                    loaded_map_res = float(loaded_map_res_raw)
-                except ValueError:
-                    print(f"Error: Cannot convert loaded map_resolution '{loaded_map_res_raw}' to a float.")
-        else:
-            print("Warning: 'map_resolution' not found in JSON or is null.")
-
-        if map_list is None:
-            print(f"Error: 'map_layout' not found in {filename}.")
-            return None, None
-
-        map_array = np.array(map_list, dtype=int) # Assuming map values are integers
-        
-        print(f"Map successfully loaded from {filename}. Resolution: {loaded_map_res}")
-        return map_array, loaded_map_res
-        
-    except FileNotFoundError:
-        print(f"Error: Map file '{filename}' not found.")
-        return None, None
-    except json.JSONDecodeError as e:
-        print(f"Error decoding JSON from {filename}: {e}")
-        return None, None
-    except Exception as e:
-        print(f"An unexpected error occurred during loading: {e}")
-        return None, None
 
 # --- Function to create and save the map visualization ---
 def create_map_image(map_array, output_image_filename="map_visualization.png", cell_pixel_size=5):
@@ -94,7 +51,12 @@ def create_map_image(map_array, output_image_filename="map_visualization.png", c
     for r_cell in range(map_height_cells):  # r_cell is row index in map_array
         for c_cell in range(map_width_cells): # c_cell is column index in map_array
             map_value = map_array[r_cell, c_cell]
-            color = COLOR_MAP.get(map_value, DEFAULT_COLOR)
+            
+            if map_value >= 99: # the path of the centerline spine
+                color = ((map_value-100)%255, map_value%255, (map_value+100)%255)
+
+            else:
+                color = COLOR_MAP.get(map_value, DEFAULT_COLOR)
 
             # Calculate the pixel coordinates for the top-left corner of the cell block
             x0 = c_cell * cell_pixel_size
@@ -103,20 +65,11 @@ def create_map_image(map_array, output_image_filename="map_visualization.png", c
             x1 = x0 + cell_pixel_size -1 # If cell_pixel_size is 1, x1=x0
             y1 = y0 + cell_pixel_size -1 # If cell_pixel_size is 1, y1=y0
             
-            # For cell_pixel_size > 1, ensure x1, y1 correctly define the rectangle.
-            # ImageDraw.rectangle takes [x0, y0, x1, y1] where x1, y1 are outside the rectangle
-            # if we want a filled block of size cell_pixel_size x cell_pixel_size.
-            # Or more simply: (x0,y0) to (x0+size-1, y0+size-1) are the pixels.
-            # So the rectangle for fill is (x0, y0) to (x0+size, y0+size) exclusive for end.
             rect_x1 = x0 + cell_pixel_size
             rect_y1 = y0 + cell_pixel_size
             
             draw_context.rectangle([x0, y0, rect_x1, rect_y1], fill=color)
             
-            # If cell_pixel_size is 1, this direct pixel access is fine too:
-            # if cell_pixel_size == 1:
-            #    pixels[c_cell, r_cell] = color
-            # else: (handled by draw_context.rectangle)
 
 
     try:
@@ -129,17 +82,15 @@ def create_map_image(map_array, output_image_filename="map_visualization.png", c
         print(f"An unexpected error occurred while saving image: {e}")
 
 # --- Main part of the script ---
-if __name__ == "__main__":
+def visualize_map(map_json_path):
     # Path to your saved JSON map file (the one you uploaded)
-    json_map_file_path = "E:/Projects/PeraBots_2025/Simulation_round/controllers/my_controller/robot_map_final.json" # Make sure this file is in the same directory or provide full path
+    json_map_file_path = map_json_path # Make sure this file is in the same directory 
+    
     # Desired name for the output image
-    output_image_file_path = "map_generated_final.png"
+    output_image_file_path = "robot_map.png"
 
-    # How many pixels to use for each map cell in the output image
-    # If your map is 50x50:
-    # - cell_pixel_size = 1 will result in a 50x50 pixel image (can be very small)
-    # - cell_pixel_size = 10 will result in a 500x500 pixel image (much clearer)
-    pixels_per_cell = 20
+    pixels_per_cell = 20        # How many pixels to use for each map cell in the output image
+
 
     print(f"Attempting to load map from: {json_map_file_path}")
     map_data, map_res = load_map_from_json(json_map_file_path)
