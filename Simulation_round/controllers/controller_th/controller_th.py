@@ -1,11 +1,11 @@
 import cv2
 import numpy as np
+from time import sleep
 from config import *
 from movemap import *
 from matrix_map import *
 from path_finder import save_optimal_path
-
-
+from visualize import visualize_map
 
 
 while robot.step(TIME_STEP) != -1:
@@ -41,7 +41,7 @@ while robot.step(TIME_STEP) != -1:
     bottomval=int((bottomzeroIndexes[0]+bottomzeroIndexes[1])/2)
     bottomlength=bottomzeroIndexes[1]-bottomzeroIndexes[0]
     difval=midVal-bottomval
-    print(f"MidVal: {midVal}, BottomVal: {bottomval}, MidLength: {midlength}, BottomLength: {bottomlength}, DifVal: {difval}")
+ #   print(f"MidVal: {midVal}, BottomVal: {bottomval}, MidLength: {midlength}, BottomLength: {bottomlength}, DifVal: {difval}")
 
     if(midzeroIndexes==(-1,-1) or midzeroIndexes==(-2,-2)):
         left_motor.setVelocity(0.0)
@@ -59,14 +59,27 @@ while robot.step(TIME_STEP) != -1:
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
     cv2.imshow("Middle Strip", frame_with_line)
+
+
     update_position()
-    update_map_with_all_sensors()
     update_map()
-    current_simulation_time = robot.getTime()
-    if current_simulation_time % 5 == 0:
-        print(f"Sim time: {robot.getTime():.2f}s - Saving map...")
-        # Ensure MAP_RES (from matrix_map.py) is accessible or pass it
-        save_map_json(MAP, MAP_RES, f"robot_map_final.json")
+ 
+
+
+
+
 cv2.destroyAllWindows()
 
+left_motor.setVelocity(0.0)
+right_motor.setVelocity(0.0)
+
+#saving json. THis will be automated to run once robot coplete travelling in the maze once.
+print(f"Sim time: {robot.getTime():.2f}s - Saving map...")
+save_map_json(MAP, MAP_RES, f"robot_map.json")
+sleep(1)
+print("Saving optimal path to JSON file...")
+save_optimal_path("robot_map.json","optimal_path_map.json","waypoints.json")
+sleep(1)
+print("Generating optimal path map image...")
+visualize_map("optimal_path_map.json")
 

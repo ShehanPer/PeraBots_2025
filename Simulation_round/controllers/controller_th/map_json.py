@@ -2,7 +2,7 @@ import json
 import numpy as np
 
 
-def save_map_json(map_array, map_resolution_val, filename="robot_map_custom.json"):
+def save_map_json(map_array, map_resolution_val, filename="robot_map.json"):
     """
     Saves the map to a JSON file with custom formatting:
     - Outer dictionary keys are indented.

@@ -25,7 +25,7 @@ def find_neighbors_skel(r, c, skeleton_array):
 
 
 def find_centerline_path(current_map_array, path_marker_val, free_space_marker_val, 
-                         preferred_start_rc=None): # Added preferred_start_rc
+                         preferred_start_rc): 
     """
     Finds a centerline path using skeletonization and improved ordering.
     Tries to use preferred_start_rc if provided and valid.
@@ -93,12 +93,11 @@ def find_centerline_path(current_map_array, path_marker_val, free_space_marker_v
 
     # --- Determine the starting node for DFS trace ---
     start_node_trace = None
-    if preferred_start_rc:
-        if preferred_start_rc in largest_component_set:
-            start_node_trace = preferred_start_rc
-            print(f"Using preferred start point: {start_node_trace}")
-        else:
-            print(f"Warning: Preferred start point {preferred_start_rc} is not on the largest skeleton component. Finding an alternative start.")
+    if preferred_start_rc in largest_component_set:
+        start_node_trace = preferred_start_rc
+        print(f"Using preferred start point: {start_node_trace}")
+    else:
+        print(f"Warning: Preferred start point {preferred_start_rc} is not on the largest skeleton component. Finding an alternative start.")
 
     if start_node_trace is None: # If preferred start not used or not provided
         # Fallback: try to find a point with fewer connections or just the first point
@@ -170,14 +169,14 @@ def mark_ordered_path(map_to_modify, ordered_waypoints, start_value):
 
 
 # --- Main execution block for the path planner ---
-def save_optimal_path(json_map_file):
+def save_optimal_path(input_map,output_map,output_waypoint,start_point = (28, 78) ):
     # Input: The JSON map file saved by robot controller
     # This should be a map populated with 0s, 1s (path), and 2s (free space)
-    input_json_map_file = json_map_file 
+    input_json_map_file = input_map
 
     # Output files
-    output_map_with_path_file = "map_with_planned_centerline.json"
-    output_waypoints_file = "centerline_waypoints_ordered.json"
+    output_map_with_path_file = output_map
+    output_waypoints_file = output_waypoint
 
     print(f"Loading map from: {input_json_map_file}")
     map_data_array, map_resolution = load_map_from_json(input_json_map_file)
@@ -185,16 +184,13 @@ def save_optimal_path(json_map_file):
     if map_data_array is not None and map_resolution is not None:
         print(f"Map loaded. Shape: {map_data_array.shape}, Resolution: {map_resolution}")
 
-        # Find the centerline path
-        # These marker values should match how your map is generated.
-        user_defined_start_point_rc = (28, 78) 
+        
 
-        # ... later, when calling the function ...
         centerline_pts = find_centerline_path(
             map_data_array, 
             PATH_MARKER, 
             FREE_SPACE_MARKER,
-            preferred_start_rc=user_defined_start_point_rc # Pass it here
+            preferred_start_rc=start_point # Optional: specify a preferred start point for path ordering
         )
 
         if centerline_pts:

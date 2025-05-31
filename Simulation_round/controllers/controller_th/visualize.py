@@ -83,7 +83,7 @@ def create_map_image(map_array, output_image_filename="map_visualization.png", c
 
 # --- Main part of the script ---
 def visualize_map(map_json_path):
-    # Path to your saved JSON map file (the one you uploaded)
+    # Path to saved JSON map file
     json_map_file_path = map_json_path # Make sure this file is in the same directory 
     
     # Desired name for the output image
