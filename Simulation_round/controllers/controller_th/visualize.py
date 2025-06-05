@@ -77,12 +77,12 @@ def create_map_image(map_array, output_image_filename="map_visualization.png", c
         print(f"An unexpected error occurred while saving image: {e}")
 
 # --- Main function to be called from outside ---
-def visualize_map(map_json_path):
+def visualize_map(map_json_path,output_name):
     # Path to saved JSON map file
     json_map_file_path = map_json_path # Make sure file is in the same directory 
     
     # Desired name for the output image
-    output_image_file_path = "robot_map.png"
+    output_image_file_path = output_name
 
     pixels_per_cell = 20    # How many pixels to use for each map cell in the output image
 

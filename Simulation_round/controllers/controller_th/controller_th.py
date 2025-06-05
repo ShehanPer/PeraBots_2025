@@ -21,6 +21,9 @@ def stopwhenredSeeRed(frame):
 
 isredSeen=0
 counter=0
+lap=0
+print("Started lap", lap+1)
+
 while robot.step(TIME_STEP) != -1:
     counter=counter+1
     if(counter>20):
@@ -67,15 +70,37 @@ while robot.step(TIME_STEP) != -1:
     difval=midVal-bottomval
     
     if(not isredDetected(frame) and isredSeen==1):
-        left_motor.setVelocity(0.0)
-        right_motor.setVelocity(0.0)
-        break
+        print(lap+1,"laps completed")
+        if(lap>=4):#since need to complete 5 laps
+            print("Stopping the robot.......")
+            left_motor.setVelocity(0.0)
+            right_motor.setVelocity(0.0)
+            break
+        else:
+            lap=lap+1
+            
+            isredSeen=0
+            print(f"Sim time: {robot.getTime():.2f}s - Saving map...")
+            save_map_json(MAP, MAP_RES, f"robot_map{lap}.json")
+            sleep(1)
+            print("Saving optimal path to JSON file...")
+            save_optimal_path(f"robot_map{lap}.json",f"optimal_path_map{lap}.json",f"waypoints{lap}.json")
+            sleep(1)
+            print("Generating optimal path map image...")
+            visualize_map(f"optimal_path_map{lap}.json",f"robot_map{lap}.png")
+             
+            print("Started lap", lap+1)            
+            continue
+            
+          
     elif(stopwhenredSeeRed(frame)):
         isredSeen=1
         decideDirection(150,width)
+        
     elif(midzeroIndexes==(-1,-1) or midzeroIndexes==(-2,-2)):
         left_motor.setVelocity(0.0)
         right_motor.setVelocity(0.0)
+        
     else:
         if((blacktestStripArray[20]==1 or blacktestStripArray[280]==1 )and bottomzeroIndexes not in [(-1, -1), (-2, -2)] ):
             decideDirection(bottomval-difval/2,width)
